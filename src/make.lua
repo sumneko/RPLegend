@@ -38,10 +38,6 @@ local function main()
 	require 'filesystem'
 	require 'utility'
 
-	for name in pairs(fs) do
-		print(name)
-	end
-
 	--±£´æÂ·¾¶
 	git_path = root_dir
 	local input_map    = fs.path(input_map)
