@@ -2,20 +2,20 @@ local file_dir
 local test_dir
 
 local function git_fresh(fname)
-	local f = io.open((test_dir / fname):string())
+	local f = io.open((test_dir / fname):string(), 'rb')
 	local test_file = f:read('*a')
 	f:close()
 	local map_file
-	f = io.open((file_dir / fname):string())
+	f = io.open((file_dir / fname):string(), 'rb')
 	if f then
 		map_file = f:read('*a')
 		f:close()
 	end
 	if test_file ~= map_file then
-		f = io.open((file_dir / fname):string(), 'w')
+		f = io.open((file_dir / fname):string(), 'wb')
 		f:write(test_file)
 		f:close()
-		print('[更新]: ' .. fname)
+		print('[成功]: 更新 ' .. fname)
 	end
 end
 
@@ -37,6 +37,10 @@ local function main()
 	require 'luabind'
 	require 'filesystem'
 	require 'utility'
+
+	for name in pairs(fs) do
+		print(name)
+	end
 
 	--保存路径
 	git_path = root_dir
