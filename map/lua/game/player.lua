@@ -6,7 +6,7 @@
 			for y = 1, 16 do
 				if x ~= y then
 					for i = 0, 9 do
-						jass.SetPlayerAlliance(player[x], player[y], i, false)
+						jass.SetPlayerAlliance(player[x].handle, player[y].handle, i, false)
 					end
 				end
 			end

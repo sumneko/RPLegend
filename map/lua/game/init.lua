@@ -20,7 +20,7 @@
 	end
 
 	game.init()
-	
+
 	--©╙й╪сно╥
 	function game.start()
 		need 'game\\army'

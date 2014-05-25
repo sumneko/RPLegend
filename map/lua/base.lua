@@ -13,6 +13,7 @@
 
 	--¼ò»¯°æµÄrequire...
 	function need(name)
+		print('need', name)
 		return require('lua\\' .. name .. '.lua')
 	end
 

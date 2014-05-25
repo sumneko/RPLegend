@@ -116,7 +116,13 @@ local function main()
 	--将文件全部导入回去
 	table.insert(files, '(listfile)')
 	for _, name in ipairs(files) do
-		inmap:import(name, file_dir / name)
+		if name ~= '(listfile)' then
+			if inmap:import(name, file_dir / name) then
+				print('[成功]: 导入 ' .. name)
+			else
+				print('[失败]: 导入 ' .. name)
+			end
+		end
 	end
 
 	inmap:close()

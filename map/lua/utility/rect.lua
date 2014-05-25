@@ -8,7 +8,7 @@
 		return setmetatable({minx, miny, maxx, maxy}, rect)
 	end
 
-	function rect.__call(minx, miny, maxx, maxy)
+	function rect.__call(_, minx, miny, maxx, maxy)
 		if type(minx) == 'table' then
 			---rect{最小x, 最小y, 最大x, 最大y}
 			return setmetatable(minx, rect)
