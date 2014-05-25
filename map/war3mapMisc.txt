@@ -1,0 +1,8 @@
+[Misc]
+SpellCastRangeBuffer=1000.0
+MaxUnitSpeed=500.0
+MinUnitSpeed=1.0
+MaxHeroLevel=30
+HeroExpRange=0.0
+ReactionDelay=0.0
+
