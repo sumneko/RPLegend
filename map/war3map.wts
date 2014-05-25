@@ -3,11 +3,6 @@
 玩家 1
 }
 
-STRING 2
-{
-队伍 1
-}
-
 STRING 3
 {
 蓝白传说
@@ -81,5 +76,15 @@ STRING 16
 STRING 17
 {
 玩家 12
+}
+
+STRING 18
+{
+卖萌
+}
+
+STRING 19
+{
+作死
 }
 

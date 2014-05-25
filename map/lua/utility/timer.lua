@@ -54,11 +54,11 @@
 			--警告,使用的计时器超出了500个
 			print(('CreateMoreTimers!! (%d)'):format(timer.time(true), timer.count))
 		end
-		return setmetatable({jTimer}, timer.meta)
+		return setmetatable({jTimer}, timer)
 	end
 
 	--计时器结构	
-	timer.struct = {
+	timer.__index = {
 		--结构类型
 		type = 'timer',
 		
@@ -107,8 +107,6 @@
 			end
 		end,
 	}
-
-	timer.meta = {__index = timer.struct}
 
 	--常用函数
 	
