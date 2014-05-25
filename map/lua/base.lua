@@ -15,3 +15,12 @@
 	function need(name)
 		return require('lua\\' .. name .. '.lua')
 	end
+
+	--ª„±®¥ÌŒÛ¿≤
+	function debug.info(s, this)
+		local t = {}
+		for name, v in pairs(this) do
+			table.insert(t, ('[%s] %s'):format(name, v))
+		end
+		print(('%s\n=======================\n%s\n=======================\n'):format(s, table.concat(t)))
+	end
