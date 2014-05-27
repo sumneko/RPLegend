@@ -33,15 +33,14 @@
 		print('army start')
 		game.army.timer = timer.loop(1,
 			function()
-				print('create army')
-				for i = 1, 4 do
+				for i = 1, 3 do
 					--随机在地图上找一个点刷兵
 					local start = point(math.random(game.minx, game.maxx), math.random(game.miny, game.maxy))
 					--随机从5个点中找一个进攻点
-					local target = points[math.random(1, 5)]
+					local target  = points[math.random(1, 5)]
 					--刷兵出来
 					army.create{
-						player = player[i + 12],
+						player = player[i + 13],
 						id = types[i],
 						point = start,
 						point_attack = target,

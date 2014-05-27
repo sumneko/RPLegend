@@ -1,13 +1,16 @@
 	unit = {}
-
+	
 	--单位结构
 	unit.__index = {
 		--类型
 		type = 'unit',
-
+		
 		--句柄
 		handle = 0,
 
+		--单位类型
+		id = 0,
+		
 		--玩家
 		player = 0,
 
@@ -20,19 +23,70 @@
 		mana_max = 0,
 		mana_recover = 0,
 
+		--攻击力
+		attack_base = 0,
+
+		--攻击浮动
+		attack_float = 0,
+
+		--附加攻击(绿字)
+		attack_add = 0,
+
+		--攻击速度
+		---攻击速度为0时,每秒攻击0.5次(2秒);大于0时,每点攻击速度使每秒攻击次数提升0.005次;小于0时,每点攻击速度使攻击间隔增加0.02秒
+		attack_speed = 0,
+		attack_speed_freq = 0.5,
+		attack_speed_per = 2,
+
 		--移动速度
 		speed_move = 0,
 		--倍乘移动速度%
 		speed_move_2 = 100,
 
-		--攻击速度
-		speed_attack = 0,
-
 		--获取玩家
+		---unit:owner()
+		----返回player
 		owner = function(this)
 			return this.player
-		end
-		
+		end,
+
+		--获取slk数据
+		---unit:slk()
+		----返回table
+		slk = function(this)
+			return slk.unit[_id(this.id)]
+		end,
+
+		--刷新攻击力
+		attack_fresh = function(this, a, b)
+			--白字部分
+			if a then
+				--设置基础攻击
+				japi.SetUnitState(this.handle, 0x12, this.attack_base - this.attack_float - 1)
+				--设置骰子数量
+				japi.SetUnitState(this.handle, 0x10, 1)
+				--设置骰子面数
+				japi.SetUnitState(this.handle, 0x11, this.attack_float * 2 + 1)
+			end
+			--绿字部分
+			if b then
+			end
+		end,
+
+		--获取当前命令
+		order_get = function(this)
+			return jass.GetUnitCurrentOrder(this.handle)
+		end,
+
+		--添加/移除技能
+		skill = function(this, sid, lv)
+			lv = lv or 1
+			if lv == 0 then
+				jass.UnitRemoveAbility(this.handle, sid)
+			elseif not jass.UnitAddAbility(this.handle, sid) or lv > 1 then 
+				jass.UnitSetAbilityLevel(this.handle, sid, lv)
+			end
+		end,	
 	}
 
 	--句柄转单位
@@ -61,25 +115,60 @@
 
 		local u = {}
 
+		this.unit = setmetatable(u, unit)
+
 		--初始数据
 			--单位句柄
 			u.handle = jUnit
 			unit.handle[jUnit] = u
+
+			--单位类型
+			u.id = this.id
 			
 			--所属玩家
 			u.player = this.player
 
 			--最大生命值/法力值
-			u.life_max = this.life_max or jass.GetUnitState(jUnit, jass.UNIT_STATE_MAX_LIFE)
-			u.mana_max = this.mana_max or jass.GetUnitState(jUnit, jass.UNIT_STATE_MAX_MANA)
+			if this.life_max then
+				u.life_max = this.life_max
+			else
+				u.life_max = jass.GetUnitState(jUnit, jass.UNIT_STATE_MAX_LIFE)
+			end
+			if this.mana_max then
+				u.mana_max = this.mana_max
+			else
+				u.mana_max = jass.GetUnitState(jUnit, jass.UNIT_STATE_MAX_MANA)
+			end
 
 			--当前生命值/法力值
-			u.life = this.life or u.life_max
-			u.mana = this.mana or u.mana_max
+			if this.life then
+				u.life = this.life
+				jass.SetUnitState(jUnit, jass.UNIT_STATE_LIFE, this.life)
+			else
+				u.life = u.life_max
+			end
+			if this.mana then
+				u.mana = this.mana
+				jass.SetUnitState(jUnit, jass.UNIT_STATE_MANA, this.mana)
+			else
+				u.mana = u.mana_max
+			end
+
+			--攻击力
+			u.attack_base = this.attack_base or tonumber(u:slk().dmgplus1)
+			u.attack_float = this.attack_float or tonumber(u:slk().sides1)
+			u.attack_add = this.attack_add or tonumber(u:slk().dice1)
+			u:attack_fresh(true, true)
+
+			
 
 			--默认移动速度
-			u.speed_move = this.speed_move or jass.GetUnitMoveSpeed(jUnit)
-			jass.SetUnitMoveSpeed(jUnit, u.speed_move)
+			if this.speed_move then
+				u.speed_move = this.speed_move
+				jass.SetUnitMoveSpeed(jUnit, u.speed_move)
+			else
+				u.speed_move = jass.GetUnitMoveSpeed(jUnit)
+			end				
 
 			--回血回蓝
 			if this.life_recover or this.mana_recover then
@@ -90,7 +179,6 @@
 			end
 		--
 
-		this.unit = setmetatable(u, unit)
 		--调用函数
 		if this.func then
 			this.func(this.unit)

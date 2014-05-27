@@ -1,5 +1,6 @@
 	jass = require 'jass.common'
 	japi = require 'jass.japi'
+	slk = require 'jass.slk'
 	runtime = require 'jass.runtime'
 
 	--打开控制台
@@ -10,6 +11,16 @@
 
 	--关闭等待功能
 	runtime.sleep = false
+
+	--调用栈
+	function runtime.error_handle(msg)
+		print("---------------------------------------")
+		print("             LUA ERROR                 ")
+		print("---------------------------------------")
+		print(tostring(msg) .. "\n")
+		print(debug.traceback())
+		print("---------------------------------------")
+	end
 
 	--简化版的require...
 	function need(name)
@@ -23,5 +34,5 @@
 		for name, v in pairs(this) do
 			table.insert(t, ('[%s] %s'):format(name, v))
 		end
-		print(('%s\n=======================\n%s\n=======================\n'):format(s, table.concat(t)))
+		print(('%s\n=======================\n%s\n=======================\n'):format(s, table.concat(t, '\n')))
 	end

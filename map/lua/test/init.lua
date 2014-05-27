@@ -17,9 +17,10 @@
 		print('test: ', table.unpack(ss))
 		if ss[1] == 'icu' then
 			jass.FogEnable(false)
-    		jass.FogMaskEnable(false)
 		elseif ss[1] == 'start' then
 			game.start()
+		elseif ss[1] == 'hero' then
+			game.hero.start(player, 1)
 		end
 	end
 

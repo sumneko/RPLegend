@@ -5,14 +5,11 @@
 		--类型
 		type = 'army',
 
-		--继承单位结构
-		unit = nil,
-
 		--攻击移动的目标点
 		point_attack = nil,
 
 		--进行攻击移动
-		attack = function(this)
+		army_attack = function(this)
 			if this.point_attack then
 				jass.IssuePointOrderById(this.handle, order.attack, this.point_attack:get())
 			end
@@ -34,23 +31,10 @@
 		--初始数据
 			u.point_attack = this.point_attack
 
-			u:attack()
+			u:army_attack()
 
 		--发起事件
 
 		--返回小兵
 		return u
 	end
-
-	--防止小兵回头
-	event.init('指令_点目标',
-		function(this)
-			if this.order == order.move and this.type == 'army' then
-				local a = this.from
-				local point = a.point_attack
-				if point then
-					jass.IssuePointOrderById(a.handle, order.attack, point:get())
-				end
-			end
-		end
-	)

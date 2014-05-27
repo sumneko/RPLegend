@@ -10,7 +10,8 @@
 	need 'utility\\order'
 	need 'utility\\unit'
 	need 'utility\\army'
-
+	need 'utility\\hero'
+	
 	print 'hello world!'
 
 	--加载游戏流程

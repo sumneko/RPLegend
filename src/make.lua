@@ -28,7 +28,7 @@ local function main()
 		flag_newmap = true
 	end
 	
-	local input_map  = flag_newmap and (arg[1] .. 'src\\RPLegend.w3x') or arg[1]
+	local input_map  = flag_newmap and (arg[1] .. 'src\\map.w3x') or arg[1]
 	local root_dir   = flag_newmap and arg[1] or arg[2]
 	
 	--添加require搜寻路径
@@ -113,6 +113,28 @@ local function main()
 	listfile:close()
 	git_fresh(fname)
 
+	local map_dir
+	local new_dir
+	if not flag_newmap then
+		--复制地图模板到test,覆盖之前的地图
+		inmap:close()
+
+		map_dir = root_dir / 'src' / 'map.w3x'
+		new_dir = root_dir / 'test' / input_map:filename():string()
+		if pcall(fs.copy_file, map_dir, new_dir, true) then
+			print('[成功]: 复制 ' .. new_dir:string())
+		else
+			print('[失败]: 复制 ' .. new_dir:string())
+		end
+		inmap = mpq_open(new_dir)
+		if inmap then
+			print('[成功]: 打开 ' .. new_dir:string())
+		else
+			print('[失败]: 打开 ' .. new_dir:string())
+			return
+		end
+	end
+
 	--将文件全部导入回去
 	table.insert(files, '(listfile)')
 	for _, name in ipairs(files) do
@@ -128,7 +150,12 @@ local function main()
 	inmap:close()
 
 	if not flag_newmap then
-		pcall(fs.copy_file, output_map, input_map:parent_path() / ('new_' .. input_map:filename():string()), true)
+		local dir = input_map:parent_path() / ('new_' .. input_map:filename():string())
+		if pcall(fs.copy_file, new_dir, dir, true) then
+			print('[成功]: 复制 ' .. dir:string())
+		else
+			print('[失败]: 复制 ' .. dir:string())
+		end
 	end
 	
 	print('[完毕]: 用时 ' .. os.clock() .. ' 秒') 

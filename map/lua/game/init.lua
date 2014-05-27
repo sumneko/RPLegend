@@ -15,6 +15,9 @@
 		--注册地图大小
 		game.minx, game.miny, game.maxx, game.maxy = rect.map:get()
 
+		--关闭阴影
+		jass.FogMaskEnable(false)
+		
 		--设置玩家属性
 		need 'game\\player'
 	end
@@ -23,8 +26,12 @@
 
 	--开始游戏
 	function game.start()
-		need 'game\\army'
-
+		
 		--开始出兵
+		need 'game\\army'
 		game.army.start()
+
+		--创建英雄
+		need 'game\\hero'
+		
 	end

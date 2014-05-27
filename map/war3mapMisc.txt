@@ -5,4 +5,15 @@ MinUnitSpeed=1.0
 MaxHeroLevel=30
 HeroExpRange=0.0
 ReactionDelay=0.0
+AgiDefenseBase=0.0
+StrRegenBonus=0.0
+StrHitPointBonus=10.0
+AgiDefenseBonus=0.0
+AgiAttackSpeedBonus=0.0
+IntRegenBonus=0.0
+IntManaBonus=10.0
+StrAttackBonus=0.0
+MaxGuardDistance=0.0
+GuardDistance=0.0
+GuardReturnTime=0.0
 
