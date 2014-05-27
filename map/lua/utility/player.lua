@@ -18,6 +18,7 @@
 			return this.id
 		end,
 	}
+
 	
 	function player.__call(_, i)
 		return player[i]

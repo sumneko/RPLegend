@@ -11,6 +11,7 @@
 				end
 			end
 		end
+		
 	end
 
 	game.player.init()

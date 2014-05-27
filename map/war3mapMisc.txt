@@ -13,7 +13,7 @@ AgiAttackSpeedBonus=0.0
 IntRegenBonus=0.0
 IntManaBonus=10.0
 StrAttackBonus=0.0
-MaxGuardDistance=0.0
-GuardDistance=0.0
+MaxGuardDistance=100000.0
+GuardDistance=100000.0
 GuardReturnTime=0.0
 
