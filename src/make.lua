@@ -76,7 +76,13 @@ local function main()
 		--打开listfile	
 		for line in io.lines((test_dir / fname):string()) do
 			--导出并更新listfile中列举的每一个文件
-			if inmap:extract(line, test_dir / line) then
+			local dir = fs.path(test_dir:string() .. '\\' .. line)
+			local map_dir = fs.path(file_dir:string() .. '\\' .. line)
+			local dir_par = dir:parent_path()
+			local map_dir_par = map_dir:parent_path()
+			fs.create_directories(dir_par)
+			fs.create_directories(map_dir_par)
+			if inmap:extract(line, dir) then
 				print('[成功]: 导出 ' .. line)
 				git_fresh(line)
 			else
