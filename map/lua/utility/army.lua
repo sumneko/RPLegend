@@ -1,5 +1,6 @@
 	army = {}
 
+	local army = army
 	--小兵结构
 	army.__index = {
 		--类型
@@ -11,7 +12,7 @@
 		--进行攻击移动
 		army_attack = function(this)
 			if this.point_attack then
-				jass.IssuePointOrderById(this.handle, order.attack, this.point_attack:get())
+				this:issue(order.attack, this.point_attack)
 			end
 		end,
 	}

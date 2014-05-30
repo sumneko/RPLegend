@@ -1,5 +1,6 @@
 	timer = {}
 
+	local timer = timer
 	--全局计时
 	timer.gTimer = jass.CreateTimer()
 	jass.TimerStart(timer.gTimer, 999999, false, nil)
@@ -11,15 +12,15 @@
 			local t = jass.TimerGetElapsed(timer.gTimer)
 			local h = math.floor(t / 3600)
 			local m = math.floor((t - h * 3600) / 60)
-			local s = math.floor(t - h * 3600 - m * 60)
+			local s =t - h * 3600 - m * 60
 			if h == 0 then
 				if m == 0 then
-					return string.format("%02d", s)
+					return string.format("%06.3f", s)
 				else
-					return string.format("%02d:%02d", m, s)
+					return string.format("%02d:%06.3f", m, s)
 				end
 			else
-				return string.format("%02d:%02d:%02d", h, m, s)
+				return string.format("%02d:%02d:%06.3f", h, m, s)
 			end
 		else
 			return jass.TimerGetElapsed(timer.gTimer)

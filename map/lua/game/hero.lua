@@ -20,6 +20,7 @@
 			player = player,
 			id = game.hero.types[htype],
 			point = start,
+			attack_speed = 0,
 		}
 
 		game.hero[player] = game.hero[i]

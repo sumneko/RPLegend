@@ -1,5 +1,6 @@
 	rect = {}
 
+	local rect = rect
 	setmetatable(rect, rect)
 
 	--创建矩形区域

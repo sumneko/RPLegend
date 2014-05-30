@@ -1,6 +1,6 @@
 [Misc]
 SpellCastRangeBuffer=1000.0
-MaxUnitSpeed=500.0
+MaxUnitSpeed=522.0
 MinUnitSpeed=1.0
 MaxHeroLevel=30
 HeroExpRange=0.0
@@ -16,4 +16,5 @@ StrAttackBonus=0.0
 MaxGuardDistance=100000.0
 GuardDistance=100000.0
 GuardReturnTime=0.0
+FollowRange=0.0
 

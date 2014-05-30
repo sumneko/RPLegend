@@ -1,5 +1,6 @@
 	hero = {}
 
+	local hero = hero
 	--英雄结构
 	hero.__index = {
 		--类型
@@ -21,7 +22,29 @@
 		state_int_up = 0,
 
 		--主要属性
-		state_primary = ''
+		state_primary = '',
+
+		--自动攻击优先级
+		auto_attack_rule = function(this)
+			return function(u)
+				local pt = 1
+				
+				--正在攻击自己的单位优先度为100
+				if u.auto_attack_target == this then
+					pt = pt * 100
+				end
+
+				--攻击血量最少的单位
+				pt = pt * u.life
+
+				--英雄的优先度为100
+				if u.type == 'hero' then
+					pt = pt * 100
+				end
+
+				return pt
+			end
+		end,
 	}
 
 	--继承unit结构

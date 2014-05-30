@@ -1,5 +1,6 @@
 	player = {}
 
+	local player = player
 	setmetatable(player, player)
 
 	--结构
@@ -16,6 +17,11 @@
 		--获取id
 		get = function(this)
 			return this.id
+		end,
+
+		--是否是玩家
+		isPlayer = function(this)
+			return jass.GetPlayerController(this.handle) == jass.MAP_CONTROL_USER and jass.GetPlayerSlotState(this.handle) == jass.PLAYER_SLOT_STATE_PLAYING
 		end,
 	}
 
