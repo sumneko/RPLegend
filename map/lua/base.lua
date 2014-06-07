@@ -12,6 +12,21 @@
 	--关闭等待功能
 	runtime.sleep = false
 
+	--拆解table
+	local function sub(t)
+		local meta = getmetatable(t)
+		local __index = meta.__index
+		local function new__index(t, k)
+			local r = __index(t, k)
+			t[k] = r
+			return r
+		end
+		meta.__index = new__index
+	end
+
+	sub(jass)
+	sub(japi)
+
 	--调用栈
 	function runtime.error_handle(msg)
 		print("---------------------------------------")

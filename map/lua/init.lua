@@ -13,6 +13,7 @@
 	need 'utility\\unit'
 	need 'utility\\army'
 	need 'utility\\hero'
+	need 'utility\\damage'
 	
 	print 'hello world!'
 

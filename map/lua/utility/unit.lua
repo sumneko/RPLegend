@@ -103,8 +103,14 @@
 			--主动攻击范围
 			attack_acquire = 0,
 
+			--是否是近战
+			attack_melee = true,
+
 			--正在攻击的目标
 			attack_target = nil,
+
+			--正在攻击自己的单位们
+			attack_froms = {},
 
 			--上次攻击的时间
 			attack_last_hit_time = 0,
@@ -142,12 +148,12 @@
 
 			--单位是否能攻击到(在攻击范围内)
 			isInAttackRange = function(from, to)
-				return from.attack_range + from.collision + to.collision > from:distanceUnit(to)
+				return from.attack_range + from.collision + to.collision >= from:distanceUnit(to)
 			end,
 
 			--是否在主动攻击范围内
 			isInAttackAcquire = function(from, to)
-				return from.attack_acquire + from.collision + to.collision > from:distanceUnit(to)
+				return from.attack_acquire + from.collision + to.collision >= from:distanceUnit(to)
 			end,
 
 			--攻击目标
@@ -155,6 +161,7 @@
 				--锁定目标;自动攻击不锁定
 				if lock then
 					from.attack_target = to
+					to.attack_froms[from] = true
 				end
 
 				--获取攻击图标的等级
@@ -190,6 +197,7 @@
 				--攻击出手函数
 				function attackdelay()
 					print('attack delay')
+					event.start('攻击_准备')
 					--动画
 					from:playAttack(to)
 													
@@ -200,9 +208,12 @@
 					--从检查距离的单位组中移除
 					unit.attack_unit_after_hit_group[from] = nil
 				end
+				
 				--攻击命中函数
 				function attackhit()
 					print('attack hit')
+					event.start('攻击_出手')
+					
 					--计算下次出手的时间
 					from.attack_last_hit_time = from.attack_next_hit_time
 					from.attack_next_delay_time = from.attack_last_hit_time + from.attack_speed_per
@@ -211,7 +222,13 @@
 					--加入距离检查单位组
 					unit.attack_unit_after_hit_group[from] = to
 
+					--造成伤害
+					if from.attack_melee then
+						from:attackDamage(to)
+					end
+
 				end
+				
 				--计算一下攻击出手的时间
 				if from.attack_next_delay_time > time then
 					from.attack_timer:start(from.attack_next_delay_time - time, false, attackdelay)
@@ -226,12 +243,12 @@
 				if this.attack_flag_do_not_stop then
 					return
 				end
-				if this.auto_attack_point then
-					this.auto_attack_point = nil
-				end
-				if this.attack_target or this.auto_attack_target then
+				this.auto_attack_point = nil
+				local to = this.attack_target or this.auto_attack_target
+				if to then
 					print('attack stop')
 					this.attack_target, this.auto_attack_target, auto_attack_point = nil
+					to.attack_froms[this] = nil
 					this.attack_timer:pause()
 					this:skill(|A001|, 0)
 					this:skill(|A001|, 1)
@@ -239,6 +256,19 @@
 					this:play('stop')
 					unit.attack_point_group[this], unit.attack_unit_inway_group[this], unit.attack_unit_arrive_group[this], unit.attack_unit_after_hit_group[this] = nil
 				end
+			end,
+
+			--攻击命中造成伤害
+			attackDamage = function(from, to)
+				local d_min, d_max = from.attack_base + from.attack_add - from.attack_float, from.attack_base + from.attack_add + from.attack_float
+				local d = math.random(d_min, d_max)
+				damage{
+					from = from,
+					to = to,
+					damage = d,
+					def = true,
+					reason = '攻击'
+				}
 			end,
 
 		--移动速度
@@ -300,12 +330,24 @@
 			issue = function(this, o, to, flag)
 				local r
 				--是否是玩家发布的指令
-				order.flag = not flag
-				if to then
+				if flag then
+					order.flag = not flag
 					if to.type == 'point' then
 						r = jass.IssuePointOrderById(this.handle, o, to:get())
 					else
 						r = jass.IssueTargetOrderById(this.handle, o, to.handle)
+					end
+				elseif to then
+					if type(to) == 'boolean' then
+						order.flag = not to
+						r = jass.IssueImmediateOrderById(this.handle, o)
+					else
+						order.flag = true
+						if to.type == 'point' then
+							r = jass.IssuePointOrderById(this.handle, o, to:get())
+						else
+							r = jass.IssueTargetOrderById(this.handle, o, to.handle)
+						end
 					end
 				else
 					r = jass.IssueImmediateOrderById(this.handle, o)
@@ -365,6 +407,7 @@
 					--按照优先级找出攻击目标
 					local u = table.pick(t, math.more, this:auto_attack_rule())
 					this.auto_attack_target = u
+					u.attack_froms[this] = true
 					if this:isInAttackRange(u) then
 						this:attackUnit(u)
 					else
@@ -396,6 +439,9 @@
 					return pt
 				end
 			end,
+
+		--护甲
+			def = 0,
 					
 		--技能
 			--添加/移除技能
@@ -490,10 +536,66 @@
 
 			--播放攻击动画
 			playAttack = function(this, to)
-				this:playSpeed(this.attack_speed_rate)
+				this:playSpeed(this.attack_speed_rate / 1.5)
 				this:play('attack')
 				this:playList('stand')
 				this:faceUnit(to)
+			end,
+
+		--是否死亡
+		dead = false,
+
+		--死亡时间
+		death = 3,
+
+		--击杀
+			kill = function(from, to)
+				event.start('单位_击杀', {from = from, to = to})
+				
+				--自己停止攻击
+				to:attackStop()
+				
+				--设置生命值
+				jass.SetUnitState(to.handle, jass.UNIT_STATE_LIFE, 0)
+				to.dead = true
+				event.start('单位_死亡', {from = from, to = to})
+				
+				--卸载全部的数据,准备移除单位
+					--让那些正在攻击自己的人停下
+					for from in pairs(to.attack_froms) do
+						if from.auto_attack_point then
+							from:issue(order.attack, from.auto_attack_point, true)
+						elseif from.attack_target then
+							from:issue(order.move, to:getPoint(), true)
+						else
+							from:issue(order.stop, true)
+						end
+					end
+					
+					--停止回血回蓝
+					unit.recover[to] = nil
+
+					--删除计时器
+					to.attack_timer:destroy()
+
+				--准备删除单位
+				--jass.UnitSuspendDecay(to.handle, true)
+				unit.wait_to_remove_group[to] = 0
+			end,
+
+			remove = function(to)
+				event.start('单位_移除', {to = to})
+				jass.RemoveUnit(to.handle)
+				unit.handle[to.handle] = nil
+				to.handle = nil
+			end,
+
+		--颜色
+			red = 255, green = 255, blue = 255, alpha = 255,
+
+			setColor = function(this, red, green, blue, alpha)
+				this.red, this.green, this.blue, this.alpha = red or this.red, green or this.green, blue or this.blue, alpha or this.alpha
+				jass.SetUnitVertexColor(this.handle, this.red, this.green, this.blue, this.alpha)
 			end,
 	}
 
@@ -587,6 +689,17 @@
 			--自动攻击优先级
 			u.auto_attack_rule = this.auto_attack_rule
 
+			--正在攻击自己的单位
+			u.attack_froms = {}
+
+			--护甲
+			if this.def then
+				u.def = this.def
+				jass.SetUnitState(u.handle, 0x20, u.def)
+			else
+				u.def = jass.GetUnitState(u.handle, 0x20)
+			end
+
 			--禁止单位主动攻击
 			u:skill(|A000|)
 
@@ -602,6 +715,9 @@
 
 			--碰撞体积
 			u.collision = this.collision or tonumber(u:slk().collision)
+
+			--死亡时间
+			u.death = this.death or tonumber(u:slk().death)
 		--
 
 		--调用函数
@@ -619,7 +735,7 @@
 	unit.recover = {}
 
 	---以0.2为周期进行回血回蓝
-	timer.loop(0.2, true,
+	timer.loop(0.2,
 		function()
 			for u in pairs(unit.recover) do
 				local life = math.min(u.life + u.life_recover / 5, u.life_max)
@@ -636,6 +752,38 @@
 		end
 	)
 
+	------------------------------------------准备删除单位------------------------------------------------
+	unit.wait_to_remove_group = {}
+
+	--以0.1秒为周期判定
+	timer.loop(0.1,
+		function()
+			for u, time in pairs(unit.wait_to_remove_group) do
+				time = time + 0.1
+				local al = 255 - 255 * time / u.death
+				if al > 0 then
+					u:setColor(255, 255, 255, al)
+					unit.wait_to_remove_group[u] = time
+				else
+					unit.wait_to_remove_group[u] = nil
+					u:remove()
+				end
+			end
+		end
+	)
+
+	-----------------------------------------检查当前指令-----------------------------------------------
+
+		timer.loop(0.1,
+			function()
+				for handle, u in pairs(unit.handle) do
+					if u.order_type ~= '空闲' and jass.GetUnitCurrentOrder(handle) == 0 then
+						event.start('单位_空闲', {from = u})
+					end
+				end
+			end
+		)
+
 	------------------------------------------事件回应---------------------------------------------------
 
 		--无目标指令
@@ -648,14 +796,15 @@
 					if u.order_type ~= '空闲' then
 						event.start('单位_空闲', {from = u})
 					end
+
+					--中断攻击
+					u:attackStop()
 				else
 					--否则记录指令
 					u.order_type = '无目标'
 					u.order = this.order
 				end
 
-				--中断攻击
-				u:attackStop()
 			end
 		)
 
@@ -687,7 +836,7 @@
 				
 				--如果是smart指令切为敌人,则转化为attack指令
 				if this.isplayer and this.order == order.smart and to:isEnemy(u:owner()) then
-					u:issue(order.attack, to)
+					u:issue(order.attack, to, true)
 					return true
 				end
 
@@ -702,7 +851,7 @@
 				
 				--以单位为目标发布attack指令
 				if this.order == order.attack then
-					u:attackUnit(to, isplayer)
+					u:attackUnit(to, this.isplayer)
 				end
 			end
 		)
@@ -735,6 +884,8 @@
 							--攻击地面
 						end
 					end
+				else
+					this.from:attackStop()
 				end
 			end
 		)
@@ -794,13 +945,19 @@
 				local time = timer.time()
 				
 				for from, to in pairs(unit.attack_unit_inway_group) do
-					if from:isInAttackRange(to) and time >= from.attack_next_delay_time then
+					if from.attack_target or from:isInAttackAcquire(to) then
+						if from:isInAttackRange(to) and time >= from.attack_next_delay_time then
+							unit.attack_unit_inway_group[from] = nil
+							--进入攻击范围,开始攻击
+							from:skill(|A001|, 2)
+							from.attack_flag_do_not_stop = true
+							from:issue(order.attack, to)
+							from.attack_flag_do_not_stop = false
+						end
+					elseif from.auto_attack_point then
+						--不在主动攻击范围内,放弃
 						unit.attack_unit_inway_group[from] = nil
-						--进入攻击范围,开始攻击
-						from:skill(|A001|, 2)
-						from.attack_flag_do_not_stop = true
-						from:issue(order.attack, to)
-						from.attack_flag_do_not_stop = false
+						from:issue(order.attack, from.auto_attack_point, true)
 					end
 				end
 

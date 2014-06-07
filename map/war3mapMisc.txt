@@ -17,4 +17,5 @@ MaxGuardDistance=100000.0
 GuardDistance=100000.0
 GuardReturnTime=0.0
 FollowRange=0.0
+DefenseArmor=0.01
 

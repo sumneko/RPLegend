@@ -23,6 +23,11 @@
 		isPlayer = function(this)
 			return jass.GetPlayerController(this.handle) == jass.MAP_CONTROL_USER and jass.GetPlayerSlotState(this.handle) == jass.PLAYER_SLOT_STATE_PLAYING
 		end,
+
+		--设置颜色
+		setColor = function(this, c)
+			jass.SetPlayerColor(this.handle, c)
+		end,
 	}
 
 	

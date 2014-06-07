@@ -7,12 +7,12 @@
 		type = 'army',
 
 		--攻击移动的目标点
-		point_attack = nil,
+		army_point_attack = nil,
 
 		--进行攻击移动
 		army_attack = function(this)
-			if this.point_attack then
-				this:issue(order.attack, this.point_attack)
+			if this.army_point_attack then
+				this:issue(order.attack, this.army_point_attack, true)
 			end
 		end,
 	}
@@ -30,7 +30,7 @@
 		setmetatable(u, army)
 		
 		--初始数据
-			u.point_attack = this.point_attack
+			u.army_point_attack = this.army_point_attack
 
 			u:army_attack()
 

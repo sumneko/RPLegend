@@ -22,7 +22,7 @@
 				local top = pick.top
 				local this = pick.tables[top]
 				local from = this.from
-				if this.range + from.collision + u.collision > this.point:distanceUnit(u) then
+				if this.range + from.collision + u.collision >= this.point:distanceUnit(u) then
 					if (not this.filter or this.filter(from, u)) and (not this.func or not this.func(u)) then
 						table.insert(this.table, u)
 					end
@@ -59,6 +59,11 @@
 
 				--检查可见度
 				if fi['可见'] and not u:isVisible(this:owner()) then
+					return
+				end
+
+				--是否包含死亡单位
+				if u.dead and not fi['死亡'] then
 					return
 				end
 				

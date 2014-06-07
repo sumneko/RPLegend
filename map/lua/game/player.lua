@@ -12,6 +12,10 @@
 			end
 		end
 		
+		--设置野怪的颜色
+		player[13]:setColor(0)
+		player[14]:setColor(1)
+		player[15]:setColor(2)
 	end
 
 	game.player.init()
