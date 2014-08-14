@@ -9,12 +9,31 @@
 		return math.sqrt(x * x + y * y)
 	end
 
+	--
 	function math.less(x, y)
 		return x < y
 	end
 
 	function math.more(x, y)
 		return x > y
+	end
+
+	--计算2个角度之间的夹角
+	function math.angle(r1, r2)
+		local r = (r1 - r2) % 360
+        if r > 0 then
+	        if r > 180 then
+		        return 360 - r
+	        else
+		        return r
+	        end
+        else
+	        if r < - 180 then
+		        return 360 + r
+	        else
+		        return - r
+	        end
+        end
 	end
 
 	--弧度去死吧
@@ -62,3 +81,5 @@
 		function math.atan(v1, v2)
 			return atan(v1, v2) * deg
 		end
+
+		math.atan2 = math.atan

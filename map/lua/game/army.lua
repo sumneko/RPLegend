@@ -31,9 +31,9 @@
 		--注册小兵类型
 		local types = game.army.types
 		print('army start')
-		game.army.timer = timer.rep(1, 100, true,
+		game.army.timer = timer.rep(1, 1, true,
 			function()
-				for i = 1, 3 do
+				for i = 1, 1 do
 					--随机在地图上找一个点刷兵
 					local start = point(math.random(game.minx, game.maxx), math.random(game.miny, game.maxy))
 					--随机从5个点中找一个进攻点

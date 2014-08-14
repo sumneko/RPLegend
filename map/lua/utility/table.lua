@@ -51,3 +51,13 @@
 
 			return t[r]
 		end
+
+	--批量删除表中指定的索引
+	function table.removes(a, b)
+		for j = 1, #b do
+			local x, y = b[j], b[j + 1] or #a
+			for i = x - j + 1, y - j + 1 do
+				a[i] = a[i + j]
+			end
+		end
+	end

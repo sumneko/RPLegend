@@ -106,6 +106,15 @@
 			--是否是近战
 			attack_melee = true,
 
+			--远程弹道
+			attack_missiles = {},
+
+			--射弹弧度
+			attack_missile_arc = 0,
+
+			--射弹速度
+			attack_missile_speed = 100,
+
 			--正在攻击的目标
 			attack_target = nil,
 
@@ -222,9 +231,23 @@
 					--加入距离检查单位组
 					unit.attack_unit_after_hit_group[from] = to
 
+					local d_min, d_max = from.attack_base + from.attack_add - from.attack_float, from.attack_base + from.attack_add + from.attack_float
+					local d = math.random(d_min, d_max)
+
+					local damage = {
+						from = from,
+						to = to,
+						damage = d,
+						def = true,
+						reason = '攻击'
+					}
+					
 					--造成伤害
 					if from.attack_melee then
-						from:attackDamage(to)
+						from:attackDamage(to, damage)
+					else
+						--发射投射物
+						from:attackLaunch(to, damage)
 					end
 
 				end
@@ -259,16 +282,55 @@
 			end,
 
 			--攻击命中造成伤害
-			attackDamage = function(from, to)
-				local d_min, d_max = from.attack_base + from.attack_add - from.attack_float, from.attack_base + from.attack_add + from.attack_float
-				local d = math.random(d_min, d_max)
-				damage{
-					from = from,
-					to = to,
-					damage = d,
-					def = true,
-					reason = '攻击'
+			attackDamage = function(from, to, d)
+				damage(d)
+			end,
+
+			--普通攻击投射物命中
+			attackLaunchHit = function(this)
+				local data = this.data
+				local d = data.damage
+				d.from = this.from
+				d.to = this.to
+				damage(d)
+			end,
+
+			--发射普通攻击投射物
+			attackLaunch = function(from, to, d)
+				local x, y, z = from:launchXYZ()
+				local data = {
+					damage = d
 				}
+				mover{
+					from = from,
+					target = to,
+					speed = from.attack_speed,
+					model = from.attack_missiles[#from.attack_missiles],
+					high = from:distance(to) * from.attack_arc,
+					x = x,
+					y = y,
+					z = z,
+					tz = to:impactZ(),
+					data = data,
+					hit = from.attackLaunchHit,
+				}
+			end,
+
+			--计算弹道出手偏移
+			launchXYZ = function(this)
+				local face = this:face() - 90
+				local slk = this:slk()
+				local lx, ly, lz = slk.launchX or 0, slk.launchY or 0, slk.launchZ or 0
+				if lx ~= 0 or ly ~= 0 then
+					local dis = math.sqrt(lx * lx + ly * ly)
+					local ang = math.atan(ly, lx) + face
+					lx, ly = dis * math.cos(ang), dis * math.sin(ang)
+				end
+				return lx, ly, lz
+			end,
+
+			impactZ = function(this)
+				return tonumber(this:slk().impactZ) or 0
 			end,
 
 		--移动速度
@@ -472,18 +534,52 @@
 				return jass.GetUnitX(this.handle), jass.GetUnitY(this.handle)
 			end,
 
-		--距离/角度
-			--与单位的距离
-			distanceUnit = function(this, u)
-				local x1, y1 = this:getXY()
-				local x2, y2 = u:getXY()
-				return math.distance(x1, y1, x2, y2)
+			setXY = function(this, x, y)
+				jass.SetUnitX(this.handle, x)
+				jass.SetUnitY(this.handle, y)
 			end,
 
-			--与点的距离
-			distancePoint = function(this, p)
+			getX = function(this)
+				return jass.GetUnitX(this.handle)
+			end,
+
+			getY = function(this)
+				return jass.GetUnitY(this.handle)
+			end,
+
+			getZ = function(this)
+				jass.MoveLocation(point.dummy, this:getXY())
+				return jass.GetLocationZ(point.dummy) + this:getFly()
+			end,
+
+			setZ = function(this, z)
+				jass.MoveLocation(point.dummy, this:getXY())
+				local lz = jass.GetLocationZ(point.dummy)
+				if lz > z then
+					this:setFly(0)
+					return false
+				else
+					this:setFly(z - lz)
+					return true
+				end
+			end,
+
+			fly = 0,
+
+			getFly = function(this)
+				return this.fly
+			end,
+
+			setFly = function(this, fly)
+				this.fly = fly
+				jass.SetUnitFlyHeight(this.handle, fly, 0)
+			end,
+
+		--距离/角度
+			--与单位的距离
+			distance = function(this, u)
 				local x1, y1 = this:getXY()
-				local x2, y2 = p:get()
+				local x2, y2 = u:getXY()
 				return math.distance(x1, y1, x2, y2)
 			end,
 
@@ -491,13 +587,6 @@
 			angleUnit = function(this, u)
 				local x1, y1 = this:getXY()
 				local x2, y2 = u:getXY()
-				return math.atan(y2 - y1, x2 - x1)
-			end,
-
-			--与点的角度
-			anglePoint = function(this, p)
-				local x1, y1 = this:getXY()
-				local x2, y2 = p:get()
 				return math.atan(y2 - y1, x2 - x1)
 			end,
 
@@ -510,6 +599,11 @@
 				--面向点
 				facePoint = function(this, p)
 					jass.SetUnitFacing(this.handle, this:anglePoint(p))
+				end,
+
+			--获取单位面向
+				face = function(this)
+					return jass.GetUnitFacing(this.handle)
 				end,
 
 		--可见度
@@ -597,6 +691,9 @@
 				this.red, this.green, this.blue, this.alpha = red or this.red, green or this.green, blue or this.blue, alpha or this.alpha
 				jass.SetUnitVertexColor(this.handle, this.red, this.green, this.blue, this.alpha)
 			end,
+
+		--挂载的其他移动器(需要的时候创建表)
+		movers = nil,
 	}
 
 	--句柄转单位
@@ -692,6 +789,18 @@
 			--正在攻击自己的单位
 			u.attack_froms = {}
 
+			--是否是近战英雄
+			u.attack_melee = jass.IsUnitType(u.handle, jass.UNIT_TYPE_MELEE_ATTACKER)
+
+			--弹道
+			u.attack_missiles = {u:slk().Missileart}
+
+			--射弹弧度
+			u.attack_missile_arc = tonumber(u:slk().Missilearc)
+
+			--射弹速度
+			u.attack_missile_speed = tonumber(u:slk().Missilespeed)
+
 			--护甲
 			if this.def then
 				u.def = this.def
@@ -705,6 +814,10 @@
 
 			--添加一个攻击按钮
 			u:skill(|A001|)
+
+			--可以飞行
+			u:skill(|Arav|)
+			u:skill(|Arav|, 0)
 			
 			--默认移动速度
 			u:moveSpeed(this.move_speed or jass.GetUnitMoveSpeed(u.handle))
